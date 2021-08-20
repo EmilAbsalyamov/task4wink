@@ -1,10 +1,9 @@
-import React, {useState} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import './App.css';
 import Episode from './components/Episode';
 import useEventListener from '@use-it/event-listener'
 
 function App() {
-  // Дата которая якобы пришла к нам с бэка
   const dataFromAPI = [
     {
       episode: 1,
@@ -73,31 +72,38 @@ function App() {
       live: false
     }
   ]
-  // local state для хранения выбранного компонента
-  const [selected, setSelected] = useState(1) 
+
+  const [selected, setSelected] = useState(1) //выбранная серия
 
   const arrowKeys = ({ key }) => {
     if ((selected < dataFromAPI.length) && key === 'ArrowDown') {
       setSelected(selected + 1)
-      window.scrollBy(0, 137)
-      //тут подразумевалась работа с options чтобы сделать behavior: 'smooth'(чтобы скрол стал плавным) , но так и не получилось это
-      //реализовать.
-      //Думаю можно было бы навесить реф на каждый компонент и следить за положением на странице и делать скрол в зависимости от положения,но // насколько мне известно ,нужно стараться не использовать рефы,поэтому выбрал данное решение]
     }
     else if ((selected > 1) && key === 'ArrowUp') {
       setSelected(selected - 1)
-      window.scrollBy(0, -137);
     }
   }
-  useEventListener('keydown', arrowKeys);
-//никогда до этого не сталкивался с такой задачей,весь вечер вот провел на stackoverflow уверен что решение не оптимальное но крайне не 
-//хотелось лезть в DOM используюя рефы.Очень заинтересовали подобного рода задачи на работу с keyboardEvent)
-//возможно я допустил архитектурные ошибки,тк давно не работал без апишки и редакса,в основном стараюсь строить работу с данными с thunk -ах 
-//и максимально разгружать UI от логики.
-//Решение подобных задач мне было бы интересно при работе в компании)
-//Если нужно что то подправить или переделать,жду отклика,но старался писать так как сам представляю работу с ивентами клавиатуры
+  // выбрал keyup,вместо keydown чтобы побороть скролл при зажимании клавиши,при этом оставляя возможность скроллить мышкой(если нам нужно убрать скролл и на мышке ,я бы в css добавил overflow: hidden;).
+  useEventListener('keyup', arrowKeys)
+  window.addEventListener('keydown', (e) => e.preventDefault(), false)
 
-  
+  //повесил реф на родительский элемент(116 str),чтобы стучаться через children в каждый эпизод и получать его позицию.
+  //почитал документацию в реакте ,на сколько я понял,в данном случае , рефы применять приемлимо
+  const episodesRef = useRef(null)
+  // в эффекте я проверяю кординаты выбранного элемента и сравниваю с высотой экрана пользователя и в случае необходимости скролю на высоту равную высоте элемента
+  useEffect(() => {
+    const selectedEpisode = episodesRef.current.children[selected - 1] //получаем элемент с выбранной серией
+    const selBottom = selectedEpisode.getBoundingClientRect().bottom //беру кординаты нижнего края по Y
+    const elemHeight = selectedEpisode.getBoundingClientRect().height //высота элемента
+
+    if (selBottom + elemHeight > window.innerHeight) { //делаю запас в 1 элемент как на видео к ТЗ
+      window.scrollBy({ top: elemHeight, behavior: 'smooth' })  //плавный скролл вниз на высоту элемента
+    }
+    else if (selBottom < elemHeight * 2) {
+      window.scrollBy({ top: -elemHeight , behavior: 'smooth'})
+    }
+  }, [selected])
+
   const episodes = dataFromAPI.map((e) => {
     return (
       <Episode selected={selected} episode={e.episode}
@@ -105,12 +111,13 @@ function App() {
         live={e.live} key={e.episode} />)
   })
 
-
   return (
     <div className="App">
       <div className={'content'}>
-      <h1>1-й сезон</h1>
-        {episodes}
+        <h1>1-й сезон</h1>
+        <div ref={episodesRef}>
+          {episodes}
+        </div>
       </div>
     </div>
   );
