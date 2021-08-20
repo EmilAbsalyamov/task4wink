@@ -94,13 +94,13 @@ function App() {
   useEffect(() => {
     const selectedEpisode = episodesRef.current.children[selected - 1] //получаем элемент с выбранной серией
     const selBottom = selectedEpisode.getBoundingClientRect().bottom //беру кординаты нижнего края по Y
-    const elemHeight = selectedEpisode.getBoundingClientRect().height //высота элемента
+    const elemHeight = selectedEpisode.getBoundingClientRect().height + 24 //высота элемента + интервал между элементами]
 
     if (selBottom + elemHeight > window.innerHeight) { //делаю запас в 1 элемент как на видео к ТЗ
-      window.scrollBy({ top: elemHeight, behavior: 'smooth' })  //плавный скролл вниз на высоту элемента
+      window.scrollBy({ top: (selBottom + elemHeight) - window.innerHeight , behavior: 'smooth' })  //плавный скролл вниз на высоту элемента
     }
-    else if (selBottom < elemHeight * 2) {
-      window.scrollBy({ top: -elemHeight , behavior: 'smooth'})
+    else if (selBottom  < elemHeight*2) {
+      window.scrollBy({ top: (selBottom - elemHeight*2), behavior: 'smooth'})
     }
   }, [selected])
 
