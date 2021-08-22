@@ -84,8 +84,15 @@ function App() {
     }
   }
   // выбрал keyup,вместо keydown чтобы побороть скролл при зажимании клавиши,при этом оставляя возможность скроллить мышкой(если нам нужно убрать скролл и на мышке ,я бы в css добавил overflow: hidden;).
+
+  //отключаем скролл стрелками
+  const arrowOff = (e) => {
+    if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+      e.preventDefault()
+    }
+  }
   useEventListener('keyup', arrowKeys)
-  window.addEventListener('keydown', (e) => e.preventDefault(), false)
+  window.addEventListener('keydown', arrowOff, false)
 
   //повесил реф на родительский элемент(116 str),чтобы стучаться через children в каждый эпизод и получать его позицию.
   //почитал документацию в реакте ,на сколько я понял,в данном случае , рефы применять приемлимо
